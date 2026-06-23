@@ -16,11 +16,13 @@ namespace ArtShopApi.Controllers
     {
         private readonly AppDbContext _context;
         private readonly YocoService _yocoService;
+        private readonly IConfiguration _config;
 
-        public PaymentsController(AppDbContext context, YocoService yocoService)
+        public PaymentsController(AppDbContext context, YocoService yocoService, IConfiguration config)
         {
             _context = context;
             _yocoService = yocoService;
+            _config = config;
         }
 
         [HttpPost("initiate")]
@@ -71,10 +73,27 @@ namespace ArtShopApi.Controllers
         [HttpPost("webhook")]
         public async Task<IActionResult> Webhook()
         {
-
+            
 
             using var reader = new StreamReader(Request.Body);
             var body = await reader.ReadToEndAsync();
+
+            // Verify the request came from Yoco
+            var yocoSignature = Request.Headers["X-Yoco-Signature"].FirstOrDefault();
+            var webhookSecret = _config["Yoco:WebhookSecret"];
+
+            if (!string.IsNullOrEmpty(webhookSecret) && !string.IsNullOrEmpty(yocoSignature))
+            {
+                using var hmac = new System.Security.Cryptography.HMACSHA256(
+                    System.Text.Encoding.UTF8.GetBytes(webhookSecret)
+                );
+                var computedHash = Convert.ToBase64String(
+                    hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(body))
+                );
+
+                if (computedHash != yocoSignature)
+                    return Unauthorized("Invalid webhook signature.");
+            }
 
             JsonElement payload;
             try
