@@ -39,7 +39,7 @@ namespace ArtShopApi.Controllers
             }
         }
 
-        [HttpGet("my")]
+        [HttpGet("{id}")]
         public async Task<ActionResult<List<OrderResponseDto>>> GetMyOrders()
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
