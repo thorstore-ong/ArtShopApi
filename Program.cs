@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Resend;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -69,13 +70,21 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
             "http://localhost:3000",
-            "https://localhost:5173"
+            "https://localhost:5173",
+            "https://www.thorstoreart.co.za",
+            "https://thorstoreart.co.za"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
     });
 });
+
+builder.Services.AddResend(options =>
+{
+    options.ApiToken = builder.Configuration["Resend:ApiKey"]!;
+});
+builder.Services.AddScoped<EmailService>();
 
 var app = builder.Build();
 
@@ -92,6 +101,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.Urls.Add("http://0.0.0.0:8080");
 
 app.UseHttpsRedirection();
 

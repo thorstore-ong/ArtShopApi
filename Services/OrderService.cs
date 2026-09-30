@@ -8,12 +8,14 @@ namespace ArtShopApi.Services //created a service for Order because of all the c
     public class OrderService
     {
         private readonly AppDbContext _context;
+        private readonly EmailService _emailService;
 
         private const decimal ShippingCost = 120;
         
-        public OrderService(AppDbContext context)
+        public OrderService(AppDbContext context, EmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         public async Task<OrderResponseDto> PlaceOrderAsync(int userId, CreateOrderDto dto)
@@ -78,6 +80,15 @@ namespace ArtShopApi.Services //created a service for Order because of all the c
             // save everything in one transaction
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
+
+            var user = await _context.Users.FindAsync(userId);
+
+            _ = _emailService.SendOrderNotificationAsync(
+                    order.Id,
+                    order.ShippingAddress,
+                    order.Total,
+                    user?.Email ?? "Unknown"
+                );
 
             // reload with related data for the response
             await _context.Entry(order)

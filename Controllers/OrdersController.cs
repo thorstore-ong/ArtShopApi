@@ -22,6 +22,7 @@ namespace ArtShopApi.Controllers
         {
             _context = context;
             _orderService = orderService;
+            
         }
 
         [HttpPost]
@@ -40,6 +41,7 @@ namespace ArtShopApi.Controllers
         }
 
         [HttpGet("my")]
+        [Authorize]
         public async Task<ActionResult<List<OrderResponseDto>>> GetMyOrders()
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -49,6 +51,7 @@ namespace ArtShopApi.Controllers
             var orders = await _context.Orders
                 .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
+                .Where(o => o.UserId == userId)
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
 
