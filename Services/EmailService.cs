@@ -16,8 +16,8 @@ namespace ArtShopApi.Services
 
         public async Task SendOrderNotificationAsync(int orderId, string shippingAddress, decimal total, string customerEmail)
         {
-            var from = _config["Resend:From"];
-            var ro = _config["Resend:To"];
+            var from = _config["Resend:From"]!;
+            var to = _config["Resend:To"]!;
 
             var message = new EmailMessage
             {
@@ -65,6 +65,5 @@ namespace ArtShopApi.Services
 
             await _resend.EmailSendAsync(message);
         }
-    }
     }
 }
